@@ -1,4 +1,3 @@
-cat << 'ENDOFFILE' > service/routes.py
 """
 Account Service
 
