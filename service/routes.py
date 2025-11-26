@@ -75,14 +75,6 @@ def list_accounts():
     
     app.logger.info("Returning %d accounts", len(account_list))
     return account_list, status.HTTP_200_OK
-```
-
-5. Run tests, commit, push, PR, merge
-
-**Screenshot 2d: list-accounts.jpg**
-```
-Take screenshot showing:
-- Kanban board with "List all accounts" in Done column
 
 
 ######################################################################
@@ -125,15 +117,6 @@ def update_account(account_id):
     account.update()
     
     return account.serialize(), status.HTTP_200_OK
-```
-
-5. Run tests, commit, push, PR, merge
-
-**Screenshot 2e: update-accounts.jpg**
-```
-Take screenshot showing:
-- Kanban board with "Update an account" in Done column
-
 
 ######################################################################
 # DELETE AN ACCOUNT
@@ -153,17 +136,6 @@ def delete_account(account_id):
         account.delete()
     
     return "", status.HTTP_204_NO_CONTENT
-```
-
-5. Run tests, commit, push, PR, merge
-
-**Screenshot 2f: delete-accounts.jpg**
-```
-Take screenshot showing:
-- Kanban board with "Delete an account" in Done column
-- All 5 Sprint 1 stories completed
-
-
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
