@@ -38,6 +38,7 @@ class TestAccountService(TestCase):
     @classmethod
     def tearDownClass(cls):
         """Runs once before test suite"""
+        pass
 
     def setUp(self):
         """Runs before each test"""
@@ -123,7 +124,6 @@ class TestAccountService(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-    # ADD YOUR TEST CASES HERE ...
     def test_read_an_account(self):
         """It should Read a single Account"""
         account = self._create_accounts(1)[0]
