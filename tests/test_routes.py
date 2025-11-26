@@ -18,37 +18,60 @@ DATABASE_URI = os.getenv(
 )
 
 BASE_URL = "/accounts"
+CONTENT_TYPE_JSON = "application/json"
 
 
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
 class TestAccountService(TestCase):
-    """Account Service Tests"""
-
+    """REST API Server Tests"""
+    
     @classmethod
     def setUpClass(cls):
-        """Run once before all tests"""
-        app.config["TESTING"] = True
-        app.config["DEBUG"] = False
-        app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
-        app.logger.setLevel(logging.CRITICAL)
-        init_db(app)
-
-    @classmethod
-    def tearDownClass(cls):
-        """Runs once before test suite"""
-
+        # setup code
+        pass
+    
     def setUp(self):
-        """Runs before each test"""
-        db.session.query(Account).delete()  # clean up the last tests
-        db.session.commit()
-
-        self.client = app.test_client()
-
-    def tearDown(self):
-        """Runs once after each test case"""
-        db.session.remove()
+        # setup code
+        pass
+    
+    def test_create_account(self):  # Existing test
+        # test code
+        pass
+    
+    def test_read_an_account(self):  # NEW - Your test
+        """It should Read a single Account"""
+        account = self._create_accounts(1)[0]
+        resp = self.client.get(
+            f"{BASE_URL}/{account.id}",
+            content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["name"], account.name)
+    
+    def test_account_not_found(self):  # NEW - Your test
+        """It should not Read an Account that is not found"""
+        resp = self.client.get(f"{BASE_URL}/0")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+    
+    # Helper methods (also inside the class)
+    def _create_accounts(self, count):
+        """Factory method to create accounts in bulk"""
+        accounts = []
+        for _ in range(count):
+            account = AccountFactory()
+            resp = self.client.post(BASE_URL, json=account.serialize())
+            self.assertEqual(
+                resp.status_code,
+                status.HTTP_201_CREATED,
+                "Could not create test Account",
+            )
+            new_account = resp.get_json()
+            account.id = new_account["id"]
+            accounts.append(account)
+        return accounts
 
     ######################################################################
     #  H E L P E R   M E T H O D S
