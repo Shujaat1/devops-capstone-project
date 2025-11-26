@@ -170,3 +170,19 @@ def test_list_all_accounts(self):
     self.assertEqual(resp.status_code, status.HTTP_200_OK)
     data = resp.get_json()
     self.assertEqual(len(data), 5)
+
+def test_update_account(self):
+    """It should Update an existing Account"""
+    # create an account to update
+    account = self._create_accounts(1)[0]
+    new_account_data = account.serialize()
+    new_account_data["name"] = "Something Known"
+    
+    resp = self.client.put(
+        f"{BASE_URL}/{account.id}",
+        json=new_account_data,
+        content_type="application/json"
+    )
+    self.assertEqual(resp.status_code, status.HTTP_200_OK)
+    updated_account = resp.get_json()
+    self.assertEqual(updated_account["name"], "Something Known")
