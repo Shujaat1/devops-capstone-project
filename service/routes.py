@@ -76,12 +76,6 @@ def list_accounts():
     return account_list, status.HTTP_200_OK
 ```
 
-5. Run tests, commit, push, PR, merge
-
-**Screenshot 2d: list-accounts.jpg**
-```
-Take screenshot showing:
-- Kanban board with "List all accounts" in Done column
 
 
 ######################################################################
