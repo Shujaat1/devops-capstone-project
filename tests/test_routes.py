@@ -123,8 +123,12 @@ class TestAccountService(TestCase):
             content_type="test/html"
         )
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+      
+  
 
-    def test_read_an_account(self):
+
+
+def test_read_an_account(self):
         """It should Read a single Account"""
         account = self._create_accounts(1)[0]
         resp = self.client.get(
@@ -134,13 +138,11 @@ class TestAccountService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(data["name"], account.name)
-
-    def test_account_not_found(self):
+def test_account_not_found(self):
         """It should not Read an Account that is not found"""
         resp = self.client.get(f"{BASE_URL}/0")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-
-    def test_list_all_accounts(self):
+def test_list_all_accounts(self):
         """It should List all Accounts in the database"""
         self._create_accounts(5)
         resp = self.client.get(BASE_URL)
