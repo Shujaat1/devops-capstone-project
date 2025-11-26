@@ -1,4 +1,3 @@
-cat << 'ENDOFFILE' > tests/test_routes.py
 """
 Account API Service Test Suite
 
@@ -171,4 +170,3 @@ class TestAccountService(TestCase):
         """It should not allow an illegal method call"""
         response = self.client.delete(BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-ENDOFFILE
