@@ -119,12 +119,6 @@ def update_account(account_id):
     return account.serialize(), status.HTTP_200_OK
 ```
 
-5. Run tests, commit, push, PR, merge
-
-**Screenshot 2e: update-accounts.jpg**
-```
-Take screenshot showing:
-- Kanban board with "Update an account" in Done column
 
 
 ######################################################################
