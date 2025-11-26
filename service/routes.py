@@ -140,6 +140,28 @@ Take screenshot showing:
 ######################################################################
 
 # ... place you code here to DELETE an account ...
+           @app.route("/accounts/<int:account_id>", methods=["DELETE"])
+def delete_account(account_id):
+    """
+    Delete an Account
+    This endpoint will delete an Account based on the account_id
+    """
+    app.logger.info("Request to delete an Account with id: %s", account_id)
+    
+    account = Account.find(account_id)
+    if account:
+        account.delete()
+    
+    return "", status.HTTP_204_NO_CONTENT
+```
+
+5. Run tests, commit, push, PR, merge
+
+**Screenshot 2f: delete-accounts.jpg**
+```
+Take screenshot showing:
+- Kanban board with "Delete an account" in Done column
+- All 5 Sprint 1 stories completed
 
 
 ######################################################################
