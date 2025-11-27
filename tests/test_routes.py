@@ -1,3 +1,5 @@
+HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
+
 """
 Account API Service Test Suite
 
@@ -6,9 +8,9 @@ Test cases can be run with the following:
     coverage report -m
 """
 
-HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
 import os
 import logging
+from service import talisman
 from unittest import TestCase
 from service import app
 from service.common import status
