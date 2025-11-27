@@ -1,88 +1,27 @@
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: echo
-spec:
-  params:
-    - name: message
-      description: The message to echo
-      type: string
-  steps:
-    - name: echo-message
-      image: alpine:3
-      command: ['/bin/echo']
-      args: ['$(params.message)']
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: checkout
-spec:
-  params:
-    - name: repo-url
-      description: The git repository URL
-      type: string
-    - name: branch
-      description: The git branch to clone
-      type: string
-      default: main
-  workspaces:
-    - name: source
-      description: The workspace to clone the code
-  steps:
-    - name: clone
-      image: gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:latest
-      script: |
-        #!/bin/sh
-        set -ex
-        git clone -b $(params.branch) --single-branch $(params.repo-url) $(workspaces.source.path)
-
----
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: nose
 spec:
+  description: Run unit tests with nose
   workspaces:
     - name: source
   params:
     - name: args
-      description: Arguments to pass to nose
       type: string
-      default: "-v"
+      default: "-v --with-spec --spec-color"
     - name: database_uri
-      description: Database connection string
       type: string
-      default: ""
+      default: "sqlite:///test.db"
   steps:
     - name: test
-      image: python:3.9-slim
+      image: python:3.9-alpine
       workingDir: $(workspaces.source.path)
       env:
         - name: DATABASE_URI
           value: $(params.database_uri)
       script: |
-        #!/bin/bash
+        #!/bin/sh
         set -e
-        pip install -q -r requirements.txt
+        pip install --no-cache-dir -q -r requirements.txt
         nosetests $(params.args)
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: cleanup
-spec:
-  workspaces:
-    - name: source
-  steps:
-    - name: remove-source
-      image: alpine:3
-      workingDir: $(workspaces.source.path)
-      command:
-        - /bin/rm
-      args:
-        - -rf
-        - $(workspaces.source.path)/*
