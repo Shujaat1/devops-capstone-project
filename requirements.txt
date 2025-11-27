@@ -9,6 +9,7 @@ psycopg2-binary==2.9.3
 python-dotenv==0.19.2
 Flask-Talisman==1.0.0
 Flask-Cors==3.0.10
+werkzeug==2.0.3
 
 # Runtime tools
 gunicorn==20.1.0
