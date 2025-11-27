@@ -5,6 +5,8 @@ Test cases can be run with the following:
     nosetests
     coverage report -m
 """
+
+HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
 import os
 import logging
 from unittest import TestCase
