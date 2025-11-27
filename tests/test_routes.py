@@ -4,24 +4,24 @@ HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
 Account API Service Test Suite
 
 Test cases can be run with the following:
-    nosetests
-    coverage report -m
+  nosetests -v --with-spec --spec-color
+  coverage report -m
 """
-
 import os
 import logging
-from service import talisman
 from unittest import TestCase
-from service import app
-from service.common import status
-from service.models import db, Account, init_db
 from tests.factories import AccountFactory
+from service.common import status  # HTTP Status Codes
+from service.models import db, Account, init_db
+from service.routes import app
+from service import talisman
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
 )
 
 BASE_URL = "/accounts"
+HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
 
 
 ######################################################################
@@ -38,28 +38,17 @@ class TestAccountService(TestCase):
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
         app.logger.setLevel(logging.CRITICAL)
         init_db(app)
-
-
-    @classmethod
-def setUpClass(cls):
-    """Run once before all tests"""
-    api.app.config["TESTING"] = True
-    api.app.config["DEBUG"] = False
-    # Set up the test database
-    api.app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
-    api.init_db(api.app)
-    talisman.force_https = False
-    
+        talisman.force_https = False
 
     @classmethod
     def tearDownClass(cls):
         """Runs once after test suite"""
-        db.session.close()
 
     def setUp(self):
         """Runs before each test"""
-        db.session.query(Account).delete()
+        db.session.query(Account).delete()  # clean up the last tests
         db.session.commit()
+
         self.client = app.test_client()
 
     def tearDown(self):
@@ -111,8 +100,12 @@ def setUpClass(cls):
             content_type="application/json"
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Make sure location header is set
         location = response.headers.get("Location", None)
         self.assertIsNotNone(location)
+
+        # Check the data is correct
         new_account = response.get_json()
         self.assertEqual(new_account["name"], account.name)
         self.assertEqual(new_account["email"], account.email)
@@ -139,8 +132,7 @@ def setUpClass(cls):
         """It should Read a single Account"""
         account = self._create_accounts(1)[0]
         resp = self.client.get(
-            f"{BASE_URL}/{account.id}",
-            content_type="application/json"
+            f"{BASE_URL}/{account.id}", content_type="application/json"
         )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
@@ -153,9 +145,12 @@ def setUpClass(cls):
 
     def test_update_account(self):
         """It should Update an existing Account"""
+        # create an Account to update
         test_account = AccountFactory()
         response = self.client.post(BASE_URL, json=test_account.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # update the account
         new_account = response.get_json()
         new_account["name"] = "Something Known"
         response = self.client.put(f"{BASE_URL}/{new_account['id']}", json=new_account)
@@ -171,34 +166,33 @@ def setUpClass(cls):
     def test_delete_account(self):
         """It should Delete an Account"""
         account = self._create_accounts(1)[0]
-        response = self.client.delete(f"{BASE_URL}/{account.id}")
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        resp = self.client.delete(f"{BASE_URL}/{account.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_list_all_accounts(self):
         """It should Get a list of all Accounts"""
         self._create_accounts(5)
-        response = self.client.get(BASE_URL)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.get_json()
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
         self.assertEqual(len(data), 5)
 
     def test_method_not_allowed(self):
         """It should not allow an illegal method call"""
-        response = self.client.delete(BASE_URL)
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        resp = self.client.delete(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
+    def test_security_headers(self):
+        """It should return security headers"""
+        resp = self.client.get("/", environ_overrides=HTTPS_ENVIRON)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.headers.get('X-Frame-Options'), 'SAMEORIGIN')
+        self.assertEqual(resp.headers.get('X-Content-Type-Options'), 'nosniff')
+        self.assertEqual(resp.headers.get('Content-Security-Policy'), "default-src 'self'; object-src 'none'")
+        self.assertEqual(resp.headers.get('Referrer-Policy'), 'strict-origin-when-cross-origin')
 
-def test_security_headers(self):
-    """It should return security headers"""
-    resp = self.client.get("/", environ_overrides=HTTPS_ENVIRON)
-    self.assertEqual(resp.status_code, status.HTTP_200_OK)
-    self.assertEqual(resp.headers.get('X-Frame-Options'), 'SAMEORIGIN')
-    self.assertEqual(resp.headers.get('X-Content-Type-Options'), 'nosniff')
-    self.assertEqual(resp.headers.get('Content-Security-Policy'), "default-src 'self'; object-src 'none'")
-    self.assertEqual(resp.headers.get('Referrer-Policy'), 'strict-origin-when-cross-origin')
-
-def test_cors_policy(self):
-    """It should return a CORS policy"""
-    resp = self.client.get("/", environ_overrides=HTTPS_ENVIRON)
-    self.assertEqual(resp.status_code, status.HTTP_200_OK)
-    self.assertIn('Access-Control-Allow-Origin', resp.headers)
+    def test_cors_policy(self):
+        """It should return a CORS policy"""
+        resp = self.client.get("/", environ_overrides=HTTPS_ENVIRON)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(resp.headers.get('Access-Control-Allow-Origin'))
