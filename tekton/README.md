@@ -1,34 +1,23 @@
 # Tekton CD Pipeline
 
-This directory contains Tekton pipeline definitions for Continuous Deployment.
-
-## Files
-
-- **tasks.yaml**: Defines reusable Tekton tasks (echo, checkout, nose tests, cleanup)
-- **pipeline.yaml**: Defines the CD pipeline that chains tasks together
-- **pipelinerun.yaml**: Template for running the pipeline
-
-## Pipeline Flow
-
-1. **init**: Prints a start message
-2. **clone**: Checks out code from GitHub repository
-3. **test**: Runs nose tests with PostgreSQL database
-4. **cleanup**: Removes temporary files
-
-## Usage (if Tekton were installed)
-```bash
-# Apply tasks and pipeline
-oc apply -f tasks.yaml
-oc apply -f pipeline.yaml
-
-# Run the pipeline
-oc create -f pipelinerun.yaml
-
-# Watch execution
-oc get pipelinerun -w
-```
-
 ## Note
+This pipeline was designed for OpenShift with Tekton installed.
+The lab environment does not have Tekton CRDs installed and lacks
+the necessary cluster-admin permissions to install them.
 
-This project was developed in an environment without Tekton installation permissions.
-The manifests are provided to demonstrate understanding of Tekton CD concepts.
+## What Would Have Been Implemented
+
+1. **git-clone task**: Clone repository from GitHub
+2. **flake8 task**: Lint Python code
+3. **nose task**: Run unit tests
+4. **deploy task**: Apply Kubernetes manifests and restart deployment
+
+## Working CI/CD Alternative
+
+GitHub Actions is configured and working for this project:
+- Runs on every push and pull request
+- Executes linting (flake8)
+- Runs unit tests (nosetests)
+- Validates code quality
+
+See: `.github/workflows/ci-build.yaml`

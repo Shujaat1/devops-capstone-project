@@ -1,4 +1,3 @@
----
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
@@ -7,57 +6,60 @@ spec:
   params:
     - name: repo-url
       type: string
-      description: The git repository URL
     - name: branch
       type: string
-      description: The git branch to build
       default: main
-    - name: build-image
+    - name: app-name
       type: string
-      description: The image to build
+      default: accounts
   workspaces:
     - name: pipeline-workspace
   tasks:
-    - name: init
-      taskRef:
-        name: echo
-      params:
-        - name: message
-          value: "Starting CD Pipeline..."
-
     - name: clone
       taskRef:
-        name: checkout
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: pipeline-workspace
       params:
-        - name: repo-url
+        - name: url
           value: $(params.repo-url)
-        - name: branch
+        - name: revision
           value: $(params.branch)
-      workspaces:
-        - name: source
-          workspace: pipeline-workspace
-      runAfter:
-        - init
-
-    - name: test
+    
+    - name: lint
       taskRef:
-        name: nose
-      params:
-        - name: database_uri
-          value: "postgresql://postgres:pgs3cr3t@postgres:5432/postgres"
-        - name: args
-          value: "-v --with-spec --spec-color"
-      workspaces:
-        - name: source
-          workspace: pipeline-workspace
+        name: flake8
       runAfter:
         - clone
-
-    - name: cleanup
-      taskRef:
-        name: cleanup
       workspaces:
         - name: source
           workspace: pipeline-workspace
+    
+    - name: tests
+      taskRef:
+        name: nose
       runAfter:
-        - test
+        - clone
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    
+    - name: deploy
+      runAfter:
+        - lint
+        - tests
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      taskSpec:
+        workspaces:
+          - name: source
+        steps:
+          - name: deploy
+            image: quay.io/openshift/origin-cli:latest
+            script: |
+              #!/bin/sh
+              oc apply -f deploy/
+              oc rollout restart deployment/accounts
+              oc rollout status deployment/accounts
