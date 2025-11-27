@@ -13,7 +13,7 @@ def init_error_handlers(app):
     """
     Initialize error handlers for the Flask app
     """
-    
+
     @app.errorhandler(DataValidationError)
     def request_validation_error(error):
         """Handles Value Errors from bad data"""
