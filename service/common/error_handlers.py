@@ -3,7 +3,6 @@ Global Exception Handler
 
 This module provides global exception handling for the Flask application.
 """
-import logging
 from flask import jsonify
 from service import app
 from service.common import status
