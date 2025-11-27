@@ -1,21 +1,16 @@
 """
-Module: error_handlers
+Global Exception Handler
+
+This module provides global exception handling for the Flask application.
 """
 from flask import jsonify
-from service.models import DataValidationError
 from service import app
-from . import status
+from service.common import status
 
 
 ######################################################################
 # Error Handlers
 ######################################################################
-@app.errorhandler(DataValidationError)
-def request_validation_error(error):
-    """Handles Value Errors from bad data"""
-    return bad_request(error)
-
-
 @app.errorhandler(status.HTTP_400_BAD_REQUEST)
 def bad_request(error):
     """Handles bad requests with 400_BAD_REQUEST"""
