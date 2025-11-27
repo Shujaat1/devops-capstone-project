@@ -1,38 +1,63 @@
-#
-# This pipeline needs the following tasks from Tekton Hub
-#   - git-clone
-#   - flake8
-#
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
-metadata:  
+metadata:
   name: cd-pipeline
 spec:
-  workspaces:
-    - name: pipeline-workspace
   params:
     - name: repo-url
+      type: string
+      description: The git repository URL
     - name: branch
+      type: string
+      description: The git branch to build
       default: main
+    - name: build-image
+      type: string
+      description: The image to build
+  workspaces:
+    - name: pipeline-workspace
   tasks:
     - name: init
-      workspaces:
-        - name: source
-          workspace: pipeline-workspace          
       taskRef:
-        name: cleanup
+        name: echo
+      params:
+        - name: message
+          value: "Starting CD Pipeline..."
 
     - name: clone
-      workspaces:
-        - name: output
-          workspace: pipeline-workspace          
       taskRef:
-        name: git-clone
+        name: checkout
       params:
-      - name: url
-        value: $(params.repo-url)
-      - name: revision
-        value: $(params.branch)
+        - name: repo-url
+          value: $(params.repo-url)
+        - name: branch
+          value: $(params.branch)
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
       runAfter:
         - init
+
+    - name: test
+      taskRef:
+        name: nose
+      params:
+        - name: database_uri
+          value: "postgresql://postgres:pgs3cr3t@postgres:5432/postgres"
+        - name: args
+          value: "-v --with-spec --spec-color"
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      runAfter:
+        - clone
+
+    - name: cleanup
+      taskRef:
+        name: cleanup
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      runAfter:
+        - test

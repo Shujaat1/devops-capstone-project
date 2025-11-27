@@ -4,7 +4,6 @@ kind: Task
 metadata:
   name: echo
 spec:
-  description: This task will echo the message.
   params:
     - name: message
       description: The message to echo
@@ -12,41 +11,78 @@ spec:
   steps:
     - name: echo-message
       image: alpine:3
-      command: [/bin/echo]
-      args: ["$(params.message)"]
+      command: ['/bin/echo']
+      args: ['$(params.message)']
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: checkout
+spec:
+  params:
+    - name: repo-url
+      description: The git repository URL
+      type: string
+    - name: branch
+      description: The git branch to clone
+      type: string
+      default: main
+  workspaces:
+    - name: source
+      description: The workspace to clone the code
+  steps:
+    - name: clone
+      image: gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:latest
+      script: |
+        #!/bin/sh
+        set -ex
+        git clone -b $(params.branch) --single-branch $(params.repo-url) $(workspaces.source.path)
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: nose
+spec:
+  workspaces:
+    - name: source
+  params:
+    - name: args
+      description: Arguments to pass to nose
+      type: string
+      default: "-v"
+    - name: database_uri
+      description: Database connection string
+      type: string
+      default: ""
+  steps:
+    - name: test
+      image: python:3.9-slim
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: DATABASE_URI
+          value: $(params.database_uri)
+      script: |
+        #!/bin/bash
+        set -e
+        pip install -q -r requirements.txt
+        nosetests $(params.args)
+
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: cleanup
 spec:
-  description: This task will clean up a workspace by deleting all of the files.
   workspaces:
     - name: source
   steps:
-    - name: remove
+    - name: remove-source
       image: alpine:3
-      env:
-        - name: WORKSPACE_SOURCE_PATH
-          value: $(workspaces.source.path)
       workingDir: $(workspaces.source.path)
-      securityContext:
-        runAsNonRoot: false
-        runAsUser: 0
-      script: |
-        #!/usr/bin/env sh
-        set -eu
-        echo "Removing all files from ${WORKSPACE_SOURCE_PATH} ..."
-        # Delete any existing contents of the directory if it exists.
-        #
-        # We don't just "rm -rf ${WORKSPACE_SOURCE_PATH}" because ${WORKSPACE_SOURCE_PATH} might be "/"
-        # or the root of a mounted volume.
-        if [ -d "${WORKSPACE_SOURCE_PATH}" ] ; then
-          # Delete non-hidden files and directories
-          rm -rf "${WORKSPACE_SOURCE_PATH:?}"/*
-          # Delete files and directories starting with . but excluding ..
-          rm -rf "${WORKSPACE_SOURCE_PATH}"/.[!.]*
-          # Delete files and directories starting with .. plus any other character
-          rm -rf "${WORKSPACE_SOURCE_PATH}"/..?*
-        fi
-
+      command:
+        - /bin/rm
+      args:
+        - -rf
+        - $(workspaces.source.path)/*
