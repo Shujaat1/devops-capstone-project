@@ -52,7 +52,10 @@ def create_accounts():
     app.logger.info("Request to create an Account")
     check_content_type("application/json")
     account = Account()
-    account.deserialize(request.get_json())
+    try:
+        account.deserialize(request.get_json())
+    except Exception as e:
+        abort(status.HTTP_400_BAD_REQUEST, str(e))
     account.create()
     message = account.serialize()
     location_url = url_for("get_accounts", account_id=account.id, _external=True)
