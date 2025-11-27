@@ -1,4 +1,3 @@
-HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
 
 """
 Account API Service Test Suite
