@@ -39,6 +39,18 @@ class TestAccountService(TestCase):
         app.logger.setLevel(logging.CRITICAL)
         init_db(app)
 
+
+    @classmethod
+def setUpClass(cls):
+    """Run once before all tests"""
+    api.app.config["TESTING"] = True
+    api.app.config["DEBUG"] = False
+    # Set up the test database
+    api.app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
+    api.init_db(api.app)
+    talisman.force_https = False
+    
+
     @classmethod
     def tearDownClass(cls):
         """Runs once after test suite"""
@@ -174,3 +186,19 @@ class TestAccountService(TestCase):
         """It should not allow an illegal method call"""
         response = self.client.delete(BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+def test_security_headers(self):
+    """It should return security headers"""
+    resp = self.client.get("/", environ_overrides=HTTPS_ENVIRON)
+    self.assertEqual(resp.status_code, status.HTTP_200_OK)
+    self.assertEqual(resp.headers.get('X-Frame-Options'), 'SAMEORIGIN')
+    self.assertEqual(resp.headers.get('X-Content-Type-Options'), 'nosniff')
+    self.assertEqual(resp.headers.get('Content-Security-Policy'), "default-src 'self'; object-src 'none'")
+    self.assertEqual(resp.headers.get('Referrer-Policy'), 'strict-origin-when-cross-origin')
+
+def test_cors_policy(self):
+    """It should return a CORS policy"""
+    resp = self.client.get("/", environ_overrides=HTTPS_ENVIRON)
+    self.assertEqual(resp.status_code, status.HTTP_200_OK)
+    self.assertIn('Access-Control-Allow-Origin', resp.headers)
